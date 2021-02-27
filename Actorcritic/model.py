@@ -46,7 +46,7 @@ class Agent():
 
         self.t_step = 0
         
-        self.optimizer = optim.Adam(self.network.parameters(), lr = LR)
+        self.optimizer = optim.Adam(self.network.parameters(), lr = LR, betas = betas)
 
         self.rewards = []
         self.log_probs = []
@@ -69,17 +69,17 @@ class Agent():
     def learn(self):
         self.optimizer.zero_grad()
         
-        rewards = []
+        returns = []
         disc_rew = 0
         for rew in self.rewards[::-1]:
             disc_rew = rew + GAMMA*disc_rew
-            rewards.insert(0, disc_rew)
+            returns.insert(0, disc_rew)
         
         loss = 0
-        for logprob, value, reward in zip(self.log_probs, self.state_values, rewards):
-            advantage = reward  - value.item()
+        for logprob, value, total_return in zip(self.log_probs, self.state_values, returns):
+            advantage = total_return  - value.item()
             actor_loss = -logprob * advantage
-            critic_loss = torch.abs(value-reward)
+            critic_loss = torch.abs(value-total_return)
             loss += (actor_loss + critic_loss)
 
         loss.backward()

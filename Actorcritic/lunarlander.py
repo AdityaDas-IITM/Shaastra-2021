@@ -5,6 +5,18 @@ import matplotlib.pyplot as plt
 import time
 import random
 
+'''
+state = [x, y, vx, vy, theta, vtheta, left leg on ground, right leg on ground]
+
+actions = do nothing, fire left, fire right, fire main
+
+Reward for moving from the top of the screen to landing pad and zero speed is about 100..140 points. 
+If lander moves away from landing pad it loses reward.
+Episode finishes if the lander crashes or comes to rest, receiving additional -100 or +100 points.
+Each leg ground contact is +10. 
+Firing main engine is -0.3 points each frame.
+'''
+
 def train(game, num_episodes, agent):
     torch.manual_seed(543)
     for k in range(num_episodes):
@@ -31,8 +43,8 @@ def infer(game, vid, agent, arbit = False, path = './models/LunarLander.pth'):
         done = False
         state = game.reset()
         while not done:
-            #game.render()
-            vid.capture_frame()
+            game.render()
+            #vid.capture_frame()
             if not arbit:
                 action = agent.get_action(state, sample = False)
             else:
@@ -49,7 +61,7 @@ def infer(game, vid, agent, arbit = False, path = './models/LunarLander.pth'):
 if __name__=='__main__':
     #pip install gym[Box2D] -- maybe needed
     game = gym.make('LunarLander-v2')
-    vid = gym.wrappers.monitoring.video_recorder.VideoRecorder(game, path = './random.mp4')
+    #vid = gym.wrappers.monitoring.video_recorder.VideoRecorder(game, path = './random.mp4')
     action_size = game.action_space.n
     print("Action size ", action_size)
 
@@ -60,5 +72,5 @@ if __name__=='__main__':
 
     #train(game, num_episodes, agent)
     infer(game, vid, agent, arbit = False)
-    game.close()
+    #game.close()
     
