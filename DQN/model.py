@@ -13,6 +13,34 @@ LR = 5e-4               # learning rate
 UPDATE_EVERY = 8        # how often to update the network
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
+class QNetwork(nn.Module):
+    def __init__(self, action_size, input_shape, input_channels):
+        super(QNetwork, self).__init__()
+        self.conv1 = nn.Sequential(nn.Conv2d(input_channels, 8, kernel_size=3, stride = 2), nn.ReLU())
+        self.conv2 = nn.Sequential(nn.Conv2d(8, 16, kernel_size=3, stride = 2), nn.BatchNorm2d(16), nn.ReLU())
+        self.conv3 = nn.Sequential(nn.Conv2d(16, 32, kernel_size=3, stride = 1), nn.BatchNorm2d(32), nn.ReLU())
+        self.conv4 = nn.Sequential(nn.Conv2d(32, 32, kernel_size=3, stride = 2), nn.BatchNorm2d(32), nn.ReLU())
+        out_size = self.calc_size(input_channels, input_shape, self.conv1, self.conv2, self.conv3, self.conv4)
+        self.fc1 = nn.Sequential(nn.Linear(out_size, 32), nn.ReLU())
+        self.out = nn.Linear(32, action_size)
+    
+    def forward(self, x):
+        x = self.conv1(x)
+        x = self.conv2(x)
+        x = self.conv3(x)
+        x = self.conv4(x)
+        x = x.view(x.size(0), -1)
+        x = self.fc1(x)
+        x = self.out(x)
+        return x
+
+    def calc_size(self, input_channels, input_shape, *layers):
+        x = torch.rand(1, input_channels, input_shape, input_shape)
+        for layer in layers:
+            x = layer(x)
+        out_size = x.size(1)*x.size(2)*x.size(3)
+        return out_size
+
 
 class ReplayBuffer:
 
